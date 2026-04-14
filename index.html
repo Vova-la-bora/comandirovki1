@@ -1,0 +1,1984 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Учёт командировок и отгулов</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --accent: #3b82f6;
+      --accent-soft: rgba(59, 130, 246, 0.15);
+      --border: #1f2937;
+      --text: #f9fafb;
+      --muted: #9ca3af;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --warning: #f97316;
+      --radius-lg: 14px;
+      --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.65);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #1e293b 0, #020617 55%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 1200px;
+      background: linear-gradient(145deg, #020617 0, #020617 35%, #020617 100%);
+      border-radius: 24px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      box-shadow: var(--shadow-soft);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      padding: 16px 24px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      backdrop-filter: blur(18px);
+      background: radial-gradient(
+        circle at top left,
+        rgba(56, 189, 248, 0.2),
+        transparent 60%
+      );
+    }
+
+    .logo-block {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-circle {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px rgba(59, 130, 246, 0.7);
+      overflow: hidden;
+      background: transparent;
+    }
+
+    .logo-circle img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .logo-text-main {
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      font-size: 15px;
+    }
+
+    .logo-text-sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .btn-outline {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .btn-outline:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    main {
+      padding: 20px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Login */
+
+    #login-view {
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2.5fr);
+      gap: 24px;
+    }
+
+    .login-card {
+      background: radial-gradient(
+          circle at top right,
+          rgba(37, 99, 235, 0.25),
+          transparent 55%
+        ),
+        var(--card);
+      border-radius: 20px;
+      padding: 26px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .login-title {
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    .login-subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      max-width: 320px;
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 6px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+    }
+
+    .field label {
+      color: var(--muted);
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      padding: 9px 11px;
+      border-radius: 10px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.95);
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      transition: border 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.6);
+    }
+
+    .role-switch {
+      display: flex;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.9);
+      padding: 4px;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      max-width: max-content;
+    }
+
+    .role-option {
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--muted);
+    }
+
+    .role-option.active {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.7);
+    }
+
+    .btn-primary {
+      border: none;
+      outline: none;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 10px 16px;
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      color: white;
+      font-size: 14px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 14px 30px rgba(37, 99, 235, 0.6);
+    }
+
+    .btn-primary span.icon {
+      font-size: 16px;
+      transform: translateY(1px);
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.07);
+    }
+
+    .login-hint {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .login-side {
+      background: radial-gradient(
+          circle at top,
+          rgba(16, 185, 129, 0.15),
+          transparent 55%
+        ),
+        var(--card);
+      border-radius: 20px;
+      padding: 22px;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .badge {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(22, 163, 74, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.5);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #bbf7d0;
+    }
+
+    .login-side-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .login-side-list {
+      font-size: 12px;
+      color: var(--muted);
+      display: grid;
+      gap: 6px;
+    }
+
+    .login-side-list li {
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+
+    .stat-bubbles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+      font-size: 11px;
+    }
+
+    .stat-bubble {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+    }
+
+    /* Dashboard common */
+
+    .view-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .view-title {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .view-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 11px;
+    }
+
+    .chip {
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--muted);
+    }
+
+    .layout-two {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: minmax(0, 2.4fr) minmax(0, 2fr);
+      gap: 18px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(15, 23, 42, 0.95);
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.8);
+      padding: 16px 16px 14px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: baseline;
+      margin-bottom: 10px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .card-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .kpi {
+      padding: 10px 10px 9px;
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(55, 65, 81, 0.95);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12px;
+    }
+
+    .kpi-label {
+      color: var(--muted);
+    }
+
+    .kpi-value {
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .kpi-pill {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--muted);
+      margin-left: auto;
+    }
+
+    .tag-success {
+      color: #bbf7d0;
+      border-color: rgba(34, 197, 94, 0.7);
+    }
+
+    .tag-warning {
+      color: #fed7aa;
+      border-color: rgba(249, 115, 22, 0.8);
+    }
+
+    .tag-danger {
+      color: #fecaca;
+      border-color: rgba(248, 113, 113, 0.9);
+    }
+
+    .trip-current {
+      padding: 10px 10px 9px;
+      border-radius: 12px;
+      background: radial-gradient(
+          circle at top left,
+          rgba(59, 130, 246, 0.22),
+          transparent 60%
+        ),
+        rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(59, 130, 246, 0.8);
+      font-size: 12px;
+      display: grid;
+      gap: 4px;
+    }
+
+    .trip-current-destination {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .trip-current-dates {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .trip-current-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(37, 99, 235, 0.17);
+      border: 1px solid rgba(59, 130, 246, 0.9);
+      display: inline-flex;
+      gap: 4px;
+      align-items: center;
+      width: fit-content;
+    }
+
+    .trip-current-badge span.dot {
+      background: #22c55e;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 6px;
+    }
+
+    thead {
+      background: rgba(15, 23, 42, 0.96);
+    }
+
+    th,
+    td {
+      padding: 7px 8px;
+      text-align: left;
+      border-bottom: 1px solid rgba(31, 41, 55, 0.9);
+    }
+
+    th {
+      font-weight: 500;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    tbody tr:nth-child(odd) {
+      background: rgba(15, 23, 42, 0.94);
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    tbody tr:hover {
+      background: rgba(30, 64, 175, 0.45);
+    }
+
+    .status-badge {
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-size: 11px;
+      border: 1px solid;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .status-planned {
+      border-color: rgba(59, 130, 246, 0.9);
+      color: #bfdbfe;
+      background: rgba(37, 99, 235, 0.15);
+    }
+
+    .status-active {
+      border-color: rgba(34, 197, 94, 0.9);
+      color: #bbf7d0;
+      background: rgba(21, 128, 61, 0.2);
+    }
+
+    .status-done {
+      border-color: rgba(148, 163, 184, 0.9);
+      color: #e5e7eb;
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .status-cancelled {
+      border-color: rgba(248, 113, 113, 0.9);
+      color: #fecaca;
+      background: rgba(127, 29, 29, 0.6);
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: currentColor;
+    }
+
+    .small-text {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+
+    .form-grid .field {
+      font-size: 12px;
+    }
+
+    .form-grid .field label {
+      font-size: 11px;
+    }
+
+    .btn-sm {
+      font-size: 12px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      background: var(--accent);
+      color: #f9fafb;
+      transition: filter 0.1s;
+    }
+
+    .btn-sm:hover {
+      filter: brightness(1.07);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+    }
+    .btn-warning {
+      background: var(--warning);
+    }
+
+    .filter-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+
+    .filter-row .field {
+      flex-direction: row;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+    }
+
+    .filter-row .field label {
+      white-space: nowrap;
+    }
+
+    .filter-row .field input,
+    .filter-row .field select {
+      font-size: 11px;
+      padding: 5px 7px;
+      border-radius: 999px;
+    }
+
+    .status-select {
+      background: transparent;
+      color: inherit;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      font-size: 11px;
+      padding: 2px 4px;
+      outline: none;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    /* Стили для управления сотрудниками */
+    .employee-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .edit-employee, .delete-employee {
+      cursor: pointer;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(148,163,184,0.4);
+      background: rgba(0,0,0,0.4);
+      display: inline-block;
+      text-align: center;
+    }
+    .edit-employee:hover { background: var(--accent); color: white; }
+    .delete-employee:hover { background: var(--danger); color: white; }
+
+    /* Новые стили для функционала */
+    .multi-select {
+      max-height: 120px;
+      overflow-y: auto;
+    }
+
+    .multi-select option {
+      padding: 5px;
+      margin: 2px 0;
+    }
+
+    .notification {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      border: 1px solid rgba(245, 158, 11, 0.5);
+      padding: 10px 12px;
+      border-radius: 10px;
+      margin: 8px 0;
+      font-size: 12px;
+    }
+
+    .active-trips-list {
+      display: grid;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .active-trip-item {
+      padding: 6px 8px;
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: 8px;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      font-size: 11px;
+    }
+
+    .comment-box {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 8px;
+      padding: 8px;
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 900px) {
+      #login-view,
+      .layout-two {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    @media (max-width: 600px) {
+      main {
+        padding: 16px;
+      }
+      .app {
+        border-radius: 18px;
+      }
+      .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .form-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo-block">
+      <div class="logo-circle"><img src="./logotip.png" alt=""></div>
+      <div class="logo-text">
+        <div class="logo-text-main">Командировки Сибириус</div>
+        <div class="logo-text-sub">
+          Учёт командировок и отгулов сотрудников
+        </div>
+      </div>
+    </div>
+    <div class="user-info">
+      <div id="current-user-label" class="pill">
+        Не авторизован
+      </div>
+      <button id="logout-btn" class="btn-outline hidden">
+        Выйти
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- LOGIN VIEW -->
+    <section id="login-view">
+      <div class="login-card">
+        <div class="login-title">Вход в систему</div>
+        <div class="login-subtitle">
+          Выберите роль, сотрудника или войдите как администратор,
+          чтобы назначать и отслеживать командировки.
+        </div>
+        <form id="login-form" class="login-form">
+          <div class="field">
+            <label>Роль</label>
+            <div class="role-switch">
+              <div class="role-option active" data-role="employee">
+                Сотрудник
+              </div>
+              <div class="role-option" data-role="admin">
+                Администратор
+              </div>
+            </div>
+            <input type="hidden" id="role-input" value="employee" />
+          </div>
+
+          <div class="field" id="employee-select-field">
+            <label for="employee-select">Сотрудник</label>
+            <select id="employee-select"></select>
+          </div>
+
+          <div id="admin-credentials" class="hidden">
+            <div class="field">
+              <label for="admin-login">Логин администратора</label>
+              <input id="admin-login" type="text" placeholder="admin" />
+            </div>
+            <div class="field">
+              <label for="admin-password">Пароль администратора</label>
+              <input
+                id="admin-password"
+                type="password"
+                placeholder="admin"
+              />
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary">
+            <span class="icon">↳</span>
+            <span>Войти в систему</span>
+          </button>
+
+          <div class="login-hint">
+            <strong>Подсказка:</strong> для входа администратора используйте
+            логин <code>admin</code> и пароль <code>admin</code>.
+          </div>
+        </form>
+      </div>
+
+      <div class="login-side">
+        <div class="badge">
+          <span>LIVE-СТАТИСТИКА</span>
+        </div>
+        <div class="login-side-title">
+          Вся информация о командировках в одном окне
+        </div>
+        
+        <!-- Активные командировки -->
+        <div id="active-trips-container">
+          <div class="card-subtitle">Сейчас в командировке:</div>
+          <div id="active-trips-list" class="active-trips-list">
+            <!-- Заполняется JavaScript -->
+          </div>
+        </div>
+
+        <ul class="login-side-list">
+          <li><span class="dot"></span> Дни в командировках по каждому
+            сотруднику</li>
+          <li><span class="dot"></span> Автоматический расчёт отгулов</li>
+          <li><span class="dot"></span> История поездок и статус в реальном
+            времени</li>
+          <li><span class="dot"></span> Панель администратора для назначения
+            командировок</li>
+        </ul>
+        <div class="stat-bubbles">
+          <div class="stat-bubble">⏱ Средняя поездка: 12 дня</div>
+          <div class="stat-bubble">🌍 4 города в этом месяце</div>
+          <div class="stat-bubble">🧑‍💼 6 активных сотрудников</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- EMPLOYEE VIEW -->
+    <section id="employee-view" class="hidden">
+      <div class="view-header">
+        <div>
+          <div class="view-title" id="employee-view-title">
+            Командировки сотрудника
+          </div>
+          <div class="view-subtitle" id="employee-view-subtitle">
+            Сводка по дням в командировках и начисленным отгулам.
+          </div>
+        </div>
+        <div class="chips">
+          <div class="chip">Только ваш профиль</div>
+          <div class="chip">Отгулы считаются по выходным</div>
+        </div>
+      </div>
+
+      <!-- Уведомления о предстоящих командировках -->
+      <div id="upcoming-trips-notifications"></div>
+
+      <div class="layout-two">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Итоги по командировкам</div>
+              <div class="card-subtitle">
+                Суммарное время и начисленные отгулы.
+              </div>
+            </div>
+          </div>
+          <div class="kpi-grid">
+            <div class="kpi">
+              <div class="kpi-label">Всего дней в командировках</div>
+              <div class="kpi-value" id="emp-total-days">0</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-label">Начисленные отгулы (дней)</div>
+              <div class="kpi-value" id="emp-days-off">0</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-label">Поездок в этом году</div>
+              <div class="kpi-value" id="emp-trips-this-year">0</div>
+            </div>
+          </div>
+
+          <div style="margin-top: 14px; display: grid; gap: 8px;">
+            <div class="card-subtitle">Текущая / ближайшая командировка</div>
+            <div id="emp-current-trip" class="trip-current hidden">
+              <!-- Контент заполняется JS -->
+            </div>
+            <div
+              id="emp-no-current-trip"
+              class="small-text"
+              style="margin-top: 2px;"
+            >
+              Сейчас нет активных или запланированных командировок.
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Краткая справка</div>
+              <div class="card-subtitle">
+                Как считается время командировок и отгулы.
+              </div>
+            </div>
+          </div>
+          <div class="small-text" style="line-height: 1.5;">
+            • Длительность командировки считается по календарным дням, включая
+            дату выезда и дату возвращения.<br />
+            • <strong>Отгулы начисляются только за дни командировки, выпадающие на выходные</strong> (субботу и воскресенье).<br />
+            • Статусы обновляются автоматически
+          </div>
+
+          <ul class="small-text" style="margin-top: 8px; line-height: 1.5;">
+            <li>
+              <span class="status-badge status-planned">
+                <span class="badge-dot"></span> Запланирована
+              </span> — даты указаны, ещё не началась
+            </li>
+            <li>
+              <span class="status-badge status-active">
+                <span class="badge-dot"></span> Активна
+              </span> — идёт прямо сейчас
+            </li>
+            <li>
+              <span class="status-badge status-done">
+                <span class="badge-dot"></span> Завершена
+              </span> — уже прошла
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 6px;">
+        <div class="card-header">
+          <div>
+            <div class="card-title">История командировок</div>
+            <div class="card-subtitle">
+              Все поездки сотрудника в хронологическом порядке.
+            </div>
+          </div>
+        </div>
+        <table>
+          <thead>
+          <tr>
+            <th>Город / место</th>
+            <th>Цель</th>
+            <th>Даты</th>
+            <th>Дней</th>
+            <th>Статус</th>
+            <th>Комментарий</th>
+          </tr>
+          </thead>
+          <tbody id="emp-trips-table"></tbody>
+        </table>
+        <div class="small-text" style="margin-top: 6px;">
+          Если данных нет — администратор ещё не назначил вам командировки.
+        </div>
+      </div>
+    </section>
+
+    <!-- ADMIN VIEW -->
+    <section id="admin-view" class="hidden">
+      <div class="view-header">
+        <div>
+          <div class="view-title">Панель администратора</div>
+          <div class="view-subtitle">
+            Управление сотрудниками, назначение командировок и статистика.
+          </div>
+        </div>
+        <div class="chips">
+          <div class="chip">Полный доступ к данным</div>
+          <div class="chip">Хранение в браузере (localStorage)</div>
+        </div>
+      </div>
+
+      <!-- Блок управления сотрудниками -->
+      <div class="card" style="margin-bottom: 6px;">
+        <div class="card-header">
+          <div>
+            <div class="card-title">👥 Управление сотрудниками</div>
+            <div class="card-subtitle">Добавление, редактирование и удаление сотрудников</div>
+          </div>
+        </div>
+        <div class="form-grid" style="grid-template-columns: 2fr 1fr 1fr;">
+          <div class="field">
+            <label>Имя сотрудника</label>
+            <input type="text" id="new-employee-name" placeholder="Иванов Иван" />
+          </div>
+          <div class="field">
+            <label>Должность</label>
+            <select id="new-employee-position">
+              <option value="ПДО">ПДО</option>
+              <option value="Методист">Методист</option>
+            </select>
+          </div>
+          <div class="employee-actions" style="align-items: flex-end;">
+            <button type="button" id="add-employee-btn" class="btn-sm">➕ Добавить</button>
+            <button type="button" id="cancel-edit-employee" class="btn-sm btn-warning hidden">Отмена</button>
+          </div>
+        </div>
+        <div style="max-height: 220px; overflow-y: auto; margin-top: 8px;">
+          <table style="width: 100%;">
+            <thead>
+              <tr><th>ID</th><th>Имя</th><th>Должность</th><th>Действия</th></tr>
+            </thead>
+            <tbody id="admin-employees-list"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="layout-two">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Назначить командировку</div>
+              <div class="card-subtitle">
+                Добавьте командировку сотруднику, даты и цель поездки.
+              </div>
+            </div>
+          </div>
+          <form id="admin-add-trip-form">
+            <div class="form-grid">
+              <div class="field">
+                <label for="trip-employee-select">Сотрудники</label>
+                <select id="trip-employee-select" multiple class="multi-select" size="4">
+                  <!-- Заполняется JavaScript -->
+                </select>
+                <div class="small-text">Для выбора нескольких: Ctrl+Click</div>
+              </div>
+              <div class="field">
+                <label for="trip-destination">Город / место</label>
+                <input
+                  id="trip-destination"
+                  type="text"
+                  placeholder="Например: Москва"
+                  required
+                />
+              </div>
+              <div class="field">
+                <label for="trip-purpose">Цель командировки</label>
+                <input
+                  id="trip-purpose"
+                  type="text"
+                  placeholder="Конференция, переговоры, проверка объекта..."
+                  required
+                />
+              </div>
+              <div class="field">
+                <label for="trip-start">Дата начала</label>
+                <input id="trip-start" type="date" required />
+              </div>
+              <div class="field">
+                <label for="trip-end">Дата окончания</label>
+                <input id="trip-end" type="date" required />
+              </div>
+              <div class="field" style="grid-column: 1 / -1;">
+                <label for="trip-comment">Комментарий к поездке</label>
+                <textarea
+                  id="trip-comment"
+                  placeholder="Дополнительная информация о поездке..."
+                  rows="3"
+                ></textarea>
+              </div>
+            </div>
+            <button type="submit" class="btn-sm">
+              Сохранить командировку
+            </button>
+          </form>
+          <div class="small-text">
+            Статус новой командировки автоматически будет
+            <strong>“запланирована”</strong>. При наступлении дат статус обновляется автоматически.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Сводка по сотрудникам</div>
+              <div class="card-subtitle">
+                Общие показатели по командировкам за всё время.
+              </div>
+            </div>
+          </div>
+          <table>
+            <thead>
+            <tr>
+              <th>Сотрудник</th>
+              <th>Поездок</th>
+              <th>Всего дней</th>
+              <th>Отгулы (дней)</th>
+            </tr>
+            </thead>
+            <tbody id="admin-employee-stats"></tbody>
+          </table>
+          <div class="small-text" style="margin-top: 6px;">
+            Отгулы начисляются только за выходные дни в командировках.
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 6px;">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Все командировки</div>
+            <div class="card-subtitle">
+              Полный список поездок с возможностью фильтрации.
+            </div>
+          </div>
+        </div>
+
+        <div class="filter-row">
+          <div class="field">
+            <label for="admin-filter-employee">Фильтр по сотруднику</label>
+            <select id="admin-filter-employee">
+              <option value="">Все</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="admin-filter-status">Статус</label>
+            <select id="admin-filter-status">
+              <option value="">Все</option>
+              <option value="planned">Запланирована</option>
+              <option value="active">Активна</option>
+              <option value="done">Завершена</option>
+              <option value="cancelled">Отменена</option>
+            </select>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+          <tr>
+            <th>Сотрудники</th>
+            <th>Город / место</th>
+            <th>Цель</th>
+            <th>Даты</th>
+            <th>Дней</th>
+            <th>Статус</th>
+            <th>Комментарий</th>
+          </tr>
+          </thead>
+          <tbody id="admin-trips-table"></tbody>
+        </table>
+        <div class="small-text" style="margin-top: 6px;">
+          Статусы обновляются автоматически. Комментарии помогают лучше понять цель поездки.
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  // --- Data model and storage ---
+
+  const STORAGE_KEY = "travelTimeData_v2";
+
+  function seedData() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const nextMonth = new Date(today);
+    nextMonth.setMonth(today.getMonth() + 1);
+    
+    return {
+      employees: [
+        { id: 1, name: "Иван Петров", position: "ПДО" },
+        { id: 2, name: "Анна Смирнова", position: "ПДО" },
+        { id: 3, name: "Сергей Кузнецов", position: "ПДО" },
+        { id: 4, name: "Мария Орлова", position: "Методист" },
+        { id: 5, name: "Алексей Волков", position: "ПДО" },
+        { id: 6, name: "Екатерина Новикова", position: "Методист" }
+      ],
+      trips: [
+        {
+          id: 1,
+          employeeIds: [1],
+          destination: "Сургут",
+          purpose: "Проведение очных занятий",
+          startDate: `${year}-02-10`,
+          endDate: `${year}-02-12`,
+          status: "done",
+          comment: "Успешно проведены занятия по программированию"
+        },
+        {
+          id: 2,
+          employeeIds: [2],
+          destination: "Урай",
+          purpose: "Проведение очных занятий",
+          startDate: `${year}-03-05`,
+          endDate: `${year}-03-08`,
+          status: "done",
+          comment: "Обучение работе с базами данных"
+        },
+        {
+          id: 3,
+          employeeIds: [3],
+          destination: "Пыть-ях",
+          purpose: "Проведение очных занятий",
+          startDate: `${year}-11-20`,
+          endDate: `${year}-11-23`,
+          status: "planned",
+          comment: "Запланированы занятия по веб-разработке"
+        },
+        {
+          id: 4,
+          employeeIds: [1, 2],
+          destination: "Сургут",
+          purpose: "Совместное проведение занятий",
+          startDate: `${year}-11-10`,
+          endDate: `${year}-11-14`,
+          status: "active",
+          comment: "Интенсивный курс для старшеклассников"
+        },
+        {
+          id: 5,
+          employeeIds: [4, 5],
+          destination: "Москва",
+          purpose: "Участие в конференции",
+          startDate: formatDateForInput(nextMonth),
+          endDate: formatDateForInput(new Date(nextMonth.getTime() + 3 * 24 * 60 * 60 * 1000)),
+          status: "planned",
+          comment: "Ежегодная конференция по IT-образованию"
+        }
+      ],
+      lastTripId: 5
+    };
+  }
+
+  function formatDateForInput(date) {
+    return date.toISOString().split('T')[0];
+  }
+
+  function loadData() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        const initial = seedData();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
+        return initial;
+      }
+      const data = JSON.parse(raw);
+      data.trips = data.trips.map(trip => {
+        if (!trip.employeeIds) {
+          trip.employeeIds = [trip.employeeId];
+          delete trip.employeeId;
+        }
+        if (!trip.comment) {
+          trip.comment = "";
+        }
+        return trip;
+      });
+      return data;
+    } catch (e) {
+      console.error("Ошибка чтения localStorage, используется seed:", e);
+      const initial = seedData();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
+      return initial;
+    }
+  }
+
+  function saveData() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+  }
+
+  // Функция для расчета дней командировки с выходными
+  function calculateDaysWithWeekends(startStr, endStr) {
+    const start = new Date(startStr);
+    const end = new Date(endStr);
+    if (isNaN(start) || isNaN(end)) return { total: 0, weekends: 0, weekdays: 0 };
+    
+    let totalDays = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    let weekendDays = 0;
+    
+    for (let day = new Date(start); day <= end; day.setDate(day.getDate() + 1)) {
+      const dayOfWeek = day.getDay();
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        weekendDays++;
+      }
+    }
+    
+    return {
+      total: totalDays < 0 ? 0 : totalDays,
+      weekends: weekendDays,
+      weekdays: totalDays - weekendDays
+    };
+  }
+
+  function calculateEmployeeStats(employeeId) {
+    const trips = appData.trips.filter(t => t.employeeIds.includes(employeeId));
+    const year = new Date().getFullYear();
+    
+    let totalDays = 0;
+    let totalTripsThisYear = 0;
+    let totalWeekendDays = 0;
+    let totalWeekdayDays = 0;
+    
+    trips.forEach(t => {
+      const daysInfo = calculateDaysWithWeekends(t.startDate, t.endDate);
+      totalDays += daysInfo.total;
+      totalWeekendDays += daysInfo.weekends;
+      totalWeekdayDays += daysInfo.weekdays;
+      
+      if (new Date(t.startDate).getFullYear() === year) {
+        totalTripsThisYear += 1;
+      }
+    });
+    
+    return {
+      totalDays,
+      tripsThisYear: totalTripsThisYear,
+      daysOff: totalWeekendDays,
+      weekendDays: totalWeekendDays,
+      weekdayDays: totalWeekdayDays
+    };
+  }
+
+  function isTodayBetween(startStr, endStr) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const start = new Date(startStr);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(endStr);
+    end.setHours(0, 0, 0, 0);
+    return today >= start && today <= end;
+  }
+
+  function isFuture(startStr) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const start = new Date(startStr);
+    start.setHours(0, 0, 0, 0);
+    return start > today;
+  }
+
+  function isUpcoming(startStr, daysBefore = 14) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const start = new Date(startStr);
+    start.setHours(0, 0, 0, 0);
+    const diffTime = start - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 && diffDays <= daysBefore;
+  }
+
+  function updateTripStatuses() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    appData.trips.forEach(trip => {
+      const start = new Date(trip.startDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(trip.endDate);
+      end.setHours(0, 0, 0, 0);
+      
+      if (trip.status === 'cancelled') return;
+      
+      if (today > end) {
+        trip.status = 'done';
+      } else if (today >= start && today <= end) {
+        trip.status = 'active';
+      } else if (today < start) {
+        trip.status = 'planned';
+      }
+    });
+    
+    saveData();
+  }
+
+  // --- Global state ---
+
+  let appData = loadData();
+  updateTripStatuses();
+  let currentUser = null;
+  let editModeEmployeeId = null;
+
+  // --- DOM elements ---
+
+  const loginView = document.getElementById("login-view");
+  const employeeView = document.getElementById("employee-view");
+  const adminView = document.getElementById("admin-view");
+
+  const roleInput = document.getElementById("role-input");
+  const employeeSelectField = document.getElementById("employee-select-field");
+  const adminCredentialsBlock = document.getElementById("admin-credentials");
+
+  const employeeSelect = document.getElementById("employee-select");
+  const tripEmployeeSelect = document.getElementById("trip-employee-select");
+  const adminFilterEmployee = document.getElementById("admin-filter-employee");
+  const adminFilterStatus = document.getElementById("admin-filter-status");
+
+  const loginForm = document.getElementById("login-form");
+  const addTripForm = document.getElementById("admin-add-trip-form");
+
+  const currentUserLabel = document.getElementById("current-user-label");
+  const logoutBtn = document.getElementById("logout-btn");
+
+  // Employee view elements
+  const empTotalDays = document.getElementById("emp-total-days");
+  const empDaysOff = document.getElementById("emp-days-off");
+  const empTripsThisYear = document.getElementById("emp-trips-this-year");
+  const empCurrentTripBlock = document.getElementById("emp-current-trip");
+  const empNoCurrentTrip = document.getElementById("emp-no-current-trip");
+  const empTripsTable = document.getElementById("emp-trips-table");
+  const empViewTitle = document.getElementById("employee-view-title");
+  const empViewSubtitle = document.getElementById("employee-view-subtitle");
+  const upcomingTripsNotifications = document.getElementById("upcoming-trips-notifications");
+
+  // Admin view elements
+  const adminEmployeeStats = document.getElementById("admin-employee-stats");
+  const adminTripsTable = document.getElementById("admin-trips-table");
+  const adminEmployeesList = document.getElementById("admin-employees-list");
+
+  // Live statistics
+  const activeTripsList = document.getElementById("active-trips-list");
+
+  // --- Управление сотрудниками ---
+
+  function renderAdminEmployeesTable() {
+    adminEmployeesList.innerHTML = "";
+    appData.employees.forEach(emp => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${emp.id}</td>
+        <td>${escapeHtml(emp.name)}</td>
+        <td>${escapeHtml(emp.position)}</td>
+        <td>
+          <span class="edit-employee" data-id="${emp.id}">✏️ Ред.</span>
+          <span class="delete-employee" data-id="${emp.id}">🗑️ Удалить</span>
+        </td>
+      `;
+      adminEmployeesList.appendChild(tr);
+    });
+    
+    document.querySelectorAll('.edit-employee').forEach(el => {
+      el.addEventListener('click', () => editEmployee(parseInt(el.dataset.id)));
+    });
+    document.querySelectorAll('.delete-employee').forEach(el => {
+      el.addEventListener('click', () => deleteEmployee(parseInt(el.dataset.id)));
+    });
+  }
+
+  function editEmployee(id) {
+    const emp = appData.employees.find(e => e.id === id);
+    if (emp) {
+      document.getElementById("new-employee-name").value = emp.name;
+      document.getElementById("new-employee-position").value = emp.position;
+      editModeEmployeeId = id;
+      document.getElementById("add-employee-btn").textContent = "💾 Сохранить";
+      document.getElementById("cancel-edit-employee").classList.remove("hidden");
+    }
+  }
+
+  function deleteEmployee(id) {
+    if (confirm(`Удалить сотрудника? Его командировки останутся в истории (без привязки к имени).`)) {
+      // Удаляем ссылки на сотрудника из командировок
+      appData.trips.forEach(t => {
+        if (t.employeeIds.includes(id)) {
+          t.employeeIds = t.employeeIds.filter(eid => eid !== id);
+        }
+      });
+      appData.employees = appData.employees.filter(e => e.id !== id);
+      
+      // Если текущий пользователь - удалённый сотрудник, выходим
+      if (currentUser?.type === 'employee' && currentUser.employeeId === id) {
+        logoutBtn.click();
+      }
+      
+      saveData();
+      fullRefresh();
+      resetEditForm();
+    }
+  }
+
+  function resetEditForm() {
+    document.getElementById("new-employee-name").value = "";
+    document.getElementById("new-employee-position").value = "ПДО";
+    editModeEmployeeId = null;
+    document.getElementById("add-employee-btn").textContent = "➕ Добавить";
+    document.getElementById("cancel-edit-employee").classList.add("hidden");
+  }
+
+  function saveEmployee() {
+    const name = document.getElementById("new-employee-name").value.trim();
+    const position = document.getElementById("new-employee-position").value;
+    
+    if (!name) {
+      alert("Введите имя сотрудника");
+      return;
+    }
+    
+    if (editModeEmployeeId) {
+      const idx = appData.employees.findIndex(e => e.id === editModeEmployeeId);
+      if (idx !== -1) {
+        appData.employees[idx].name = name;
+        appData.employees[idx].position = position;
+      }
+    } else {
+      const newId = Math.max(...appData.employees.map(e => e.id), 0) + 1;
+      appData.employees.push({ id: newId, name, position });
+    }
+    
+    saveData();
+    fullRefresh();
+    resetEditForm();
+  }
+
+  function fullRefresh() {
+    populateEmployeeSelects();
+    renderAdminEmployeesTable();
+    renderAdminEmployeeStats();
+    renderAdminTripsTable();
+    renderActiveTrips();
+    if (currentUser?.type === 'employee') {
+      renderEmployeeView();
+    } else if (currentUser?.type === 'admin') {
+      renderAdminView();
+    }
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    });
+  }
+
+  // --- Init selects and role switch ---
+
+  function populateEmployeeSelects() {
+    employeeSelect.innerHTML = "";
+    tripEmployeeSelect.innerHTML = "";
+    adminFilterEmployee.innerHTML = '<option value="">Все</option>';
+
+    appData.employees.forEach((emp) => {
+      const opt1 = document.createElement("option");
+      opt1.value = emp.id;
+      opt1.textContent = `${emp.name} (${emp.position})`;
+      employeeSelect.appendChild(opt1);
+
+      const opt2 = document.createElement("option");
+      opt2.value = emp.id;
+      opt2.textContent = `${emp.name} (${emp.position})`;
+      tripEmployeeSelect.appendChild(opt2);
+
+      const opt3 = document.createElement("option");
+      opt3.value = emp.id;
+      opt3.textContent = emp.name;
+      adminFilterEmployee.appendChild(opt3);
+    });
+  }
+
+  function setRole(role) {
+    roleInput.value = role;
+    const options = document.querySelectorAll(".role-option");
+    options.forEach((el) => {
+      el.classList.toggle("active", el.dataset.role === role);
+    });
+
+    if (role === "employee") {
+      employeeSelectField.classList.remove("hidden");
+      adminCredentialsBlock.classList.add("hidden");
+    } else {
+      employeeSelectField.classList.add("hidden");
+      adminCredentialsBlock.classList.remove("hidden");
+    }
+  }
+
+  document.querySelectorAll(".role-option").forEach((el) => {
+    el.addEventListener("click", () => setRole(el.dataset.role));
+  });
+
+  // --- Login / logout ---
+
+  loginForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const role = roleInput.value;
+
+    if (role === "employee") {
+      const empId = parseInt(employeeSelect.value, 10);
+      if (!empId) {
+        alert("Выберите сотрудника");
+        return;
+      }
+      currentUser = { type: "employee", employeeId: empId };
+      updateCurrentUserLabel();
+      showEmployeeView();
+    } else {
+      const login = document.getElementById("admin-login").value.trim();
+      const password = document.getElementById("admin-password").value.trim();
+      if (login === "admin" && password === "admin") {
+        currentUser = { type: "admin" };
+        updateCurrentUserLabel();
+        showAdminView();
+      } else {
+        alert("Неверный логин или пароль администратора");
+        return;
+      }
+    }
+  });
+
+  logoutBtn.addEventListener("click", () => {
+    currentUser = null;
+    updateCurrentUserLabel();
+    loginView.classList.remove("hidden");
+    employeeView.classList.add("hidden");
+    adminView.classList.add("hidden");
+  });
+
+  function updateCurrentUserLabel() {
+    if (!currentUser) {
+      currentUserLabel.textContent = "Не авторизован";
+      logoutBtn.classList.add("hidden");
+      return;
+    }
+    logoutBtn.classList.remove("hidden");
+    if (currentUser.type === "employee") {
+      const emp = appData.employees.find(e => e.id === currentUser.employeeId);
+      currentUserLabel.textContent = `Сотрудник: ${emp ? emp.name : "—"}`;
+    } else {
+      currentUserLabel.textContent = "Администратор";
+    }
+  }
+
+  // --- Live statistics ---
+
+  function renderActiveTrips() {
+    activeTripsList.innerHTML = "";
+    const activeTrips = appData.trips.filter(trip => trip.status === 'active');
+    
+    if (activeTrips.length === 0) {
+      activeTripsList.innerHTML = '<div class="small-text muted">Сейчас никто не в командировке</div>';
+      return;
+    }
+
+    activeTrips.forEach(trip => {
+      const employees = trip.employeeIds.map(empId => {
+        const emp = appData.employees.find(e => e.id === empId);
+        return emp ? emp.name : 'Неизвестный';
+      }).join(', ');
+
+      const tripItem = document.createElement("div");
+      tripItem.className = "active-trip-item";
+      tripItem.innerHTML = `
+        <strong>${escapeHtml(employees)}</strong><br>
+        ${escapeHtml(trip.destination)} • ${formatDate(trip.startDate)}-${formatDate(trip.endDate)}
+      `;
+      activeTripsList.appendChild(tripItem);
+    });
+  }
+
+  // --- Employee view rendering ---
+
+  function showEmployeeView() {
+    loginView.classList.add("hidden");
+    adminView.classList.add("hidden");
+    employeeView.classList.remove("hidden");
+    renderEmployeeView();
+  }
+
+  function renderEmployeeView() {
+    if (!currentUser || currentUser.type !== "employee") return;
+    const empId = currentUser.employeeId;
+    const emp = appData.employees.find((e) => e.id === empId);
+    if (!emp) return;
+
+    empViewTitle.textContent = emp.name;
+    empViewSubtitle.textContent = `Должность: ${emp.position}. Сводка по командировкам и отгулам.`;
+
+    const trips = appData.trips
+      .filter((t) => t.employeeIds.includes(empId))
+      .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+
+    const stats = calculateEmployeeStats(empId);
+    empTotalDays.textContent = stats.totalDays;
+    empDaysOff.textContent = stats.daysOff;
+    empTripsThisYear.textContent = stats.tripsThisYear;
+
+    renderUpcomingTripNotifications(empId);
+
+    let currentTrip = null;
+    let nextTrip = null;
+
+    trips.forEach((t) => {
+      if (isTodayBetween(t.startDate, t.endDate)) {
+        currentTrip = t;
+      } else if (isFuture(t.startDate)) {
+        if (!nextTrip || new Date(t.startDate) < new Date(nextTrip.startDate)) {
+          nextTrip = t;
+        }
+      }
+    });
+
+    empCurrentTripBlock.innerHTML = "";
+    if (currentTrip || nextTrip) {
+      empCurrentTripBlock.classList.remove("hidden");
+      empNoCurrentTrip.classList.add("hidden");
+      const trip = currentTrip || nextTrip;
+      const daysInfo = calculateDaysWithWeekends(trip.startDate, trip.endDate);
+      const badgeText = currentTrip ? "Идёт сейчас" : "Ближайшая";
+
+      empCurrentTripBlock.innerHTML = `
+        <div class="trip-current-destination">${escapeHtml(trip.destination)}</div>
+        <div class="trip-current-dates">
+          ${formatDate(trip.startDate)} — ${formatDate(trip.endDate)} (${daysInfo.total} дн., ${daysInfo.weekends} вых.)
+        </div>
+        <div>${escapeHtml(trip.purpose)}</div>
+        ${trip.comment ? `<div class="comment-box">${escapeHtml(trip.comment)}</div>` : ''}
+        <div class="trip-current-badge">
+          <span class="dot"></span>
+          <span>${badgeText}</span>
+        </div>
+      `;
+    } else {
+      empCurrentTripBlock.classList.add("hidden");
+      empNoCurrentTrip.classList.remove("hidden");
+    }
+
+    empTripsTable.innerHTML = "";
+    trips.forEach((t) => {
+      const daysInfo = calculateDaysWithWeekends(t.startDate, t.endDate);
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${escapeHtml(t.destination)}</td>
+        <td>${escapeHtml(t.purpose)}</td>
+        <td>${formatDate(t.startDate)} — ${formatDate(t.endDate)}</td>
+        <td>${daysInfo.total} дн. (${daysInfo.weekends} вых.)</td>
+        <td>${renderStatusBadge(t.status)}</td>
+        <td>${escapeHtml(t.comment || '')}</td>
+      `;
+      empTripsTable.appendChild(tr);
+    });
+  }
+
+  function renderUpcomingTripNotifications(empId) {
+    upcomingTripsNotifications.innerHTML = "";
+    const upcomingTrips = appData.trips
+      .filter(trip => 
+        trip.employeeIds.includes(empId) && 
+        trip.status === 'planned' && 
+        isUpcoming(trip.startDate, 14)
+      );
+
+    if (upcomingTrips.length === 0) return;
+
+    upcomingTrips.forEach(trip => {
+      const daysUntil = Math.ceil((new Date(trip.startDate) - new Date()) / (1000 * 60 * 60 * 24));
+      const daysInfo = calculateDaysWithWeekends(trip.startDate, trip.endDate);
+      const notification = document.createElement("div");
+      notification.className = "notification";
+      notification.innerHTML = `
+        🚨 <strong>Напоминание о командировке</strong><br>
+        Через ${daysUntil} дней: ${escapeHtml(trip.destination)} (${formatDate(trip.startDate)}-${formatDate(trip.endDate)})<br>
+        <em>${escapeHtml(trip.purpose)}</em><br>
+        <small>Выходных в поездке: ${daysInfo.weekends} дн.</small>
+      `;
+      upcomingTripsNotifications.appendChild(notification);
+    });
+  }
+
+  // --- Admin view rendering ---
+
+  function showAdminView() {
+    loginView.classList.add("hidden");
+    employeeView.classList.add("hidden");
+    adminView.classList.remove("hidden");
+    renderAdminView();
+  }
+
+  function renderAdminView() {
+    renderAdminEmployeesTable();
+    renderAdminEmployeeStats();
+    renderAdminTripsTable();
+  }
+
+  function renderAdminEmployeeStats() {
+    adminEmployeeStats.innerHTML = "";
+
+    appData.employees.forEach((emp) => {
+      const stats = calculateEmployeeStats(emp.id);
+      
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${escapeHtml(emp.name)}</td>
+        <td>${stats.tripsThisYear}</td>
+        <td>${stats.totalDays}</td>
+        <td title="Из них: ${stats.weekendDays} выходных дней">${stats.daysOff}</td>
+      `;
+      adminEmployeeStats.appendChild(tr);
+    });
+  }
+
+  function renderAdminTripsTable() {
+    adminTripsTable.innerHTML = "";
+
+    const filterEmpId = adminFilterEmployee.value ? parseInt(adminFilterEmployee.value, 10) : null;
+    const filterStatus = adminFilterStatus.value || null;
+
+    const tripsSorted = [...appData.trips].sort(
+      (a, b) => new Date(a.startDate) - new Date(b.startDate)
+    );
+
+    tripsSorted.forEach((t) => {
+      if (filterEmpId && !t.employeeIds.includes(filterEmpId)) return;
+      if (filterStatus && t.status !== filterStatus) return;
+
+      const employees = t.employeeIds.map(empId => {
+        const emp = appData.employees.find(e => e.id === empId);
+        return emp ? emp.name : 'Неизвестный';
+      }).join(', ');
+
+      const daysInfo = calculateDaysWithWeekends(t.startDate, t.endDate);
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${escapeHtml(employees)}</td>
+        <td>${escapeHtml(t.destination)}</td>
+        <td>${escapeHtml(t.purpose)}</td>
+        <td>${formatDate(t.startDate)} — ${formatDate(t.endDate)}</td>
+        <td>${daysInfo.total} дн. (${daysInfo.weekends} вых.)</td>
+        <td>${renderStatusBadge(t.status)}</td>
+        <td>${escapeHtml(t.comment || '')}</td>
+      `;
+      adminTripsTable.appendChild(tr);
+    });
+  }
+
+  // --- Helpers ---
+
+  function formatDate(str) {
+    const d = new Date(str);
+    if (isNaN(d)) return str;
+    return d.toLocaleDateString("ru-RU", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "2-digit"
+    });
+  }
+
+  function renderStatusBadge(status) {
+    const classes = {
+      'planned': 'status-planned',
+      'active': 'status-active',
+      'done': 'status-done',
+      'cancelled': 'status-cancelled'
+    };
+    const texts = {
+      'planned': 'Запланирована',
+      'active': 'Активна',
+      'done': 'Завершена',
+      'cancelled': 'Отменена'
+    };
+    return `
+      <span class="status-badge ${classes[status] || 'status-done'}">
+        <span class="badge-dot"></span>
+        <span>${texts[status] || 'Завершена'}</span>
+      </span>
+    `;
+  }
+
+  // --- Add trip ---
+
+  addTripForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const selectedOptions = Array.from(tripEmployeeSelect.selectedOptions);
+    const employeeIds = selectedOptions.map(option => parseInt(option.value, 10));
+    const destination = document.getElementById("trip-destination").value.trim();
+    const purpose = document.getElementById("trip-purpose").value.trim();
+    const start = document.getElementById("trip-start").value;
+    const end = document.getElementById("trip-end").value;
+    const comment = document.getElementById("trip-comment").value.trim();
+
+    if (employeeIds.length === 0 || !destination || !purpose || !start || !end) {
+      alert("Заполните все обязательные поля формы.");
+      return;
+    }
+
+    if (new Date(end) < new Date(start)) {
+      alert("Дата окончания не может быть раньше даты начала.");
+      return;
+    }
+
+    const newId = (appData.lastTripId || 0) + 1;
+    appData.lastTripId = newId;
+    appData.trips.push({
+      id: newId,
+      employeeIds,
+      destination,
+      purpose,
+      startDate: start,
+      endDate: end,
+      status: "planned",
+      comment
+    });
+
+    saveData();
+    updateTripStatuses();
+    addTripForm.reset();
+    renderAdminView();
+    renderActiveTrips();
+    if (currentUser && currentUser.type === "employee") {
+      renderEmployeeView();
+    }
+
+    alert(`Командировка успешно добавлена для ${employeeIds.length} сотрудник(ов).`);
+  });
+
+  // --- Filters in admin view ---
+
+  adminFilterEmployee.addEventListener("change", renderAdminTripsTable);
+  adminFilterStatus.addEventListener("change", renderAdminTripsTable);
+
+  // --- Кнопки управления сотрудниками ---
+
+  document.getElementById("add-employee-btn").addEventListener("click", saveEmployee);
+  document.getElementById("cancel-edit-employee").addEventListener("click", resetEditForm);
+
+  // --- Auto-update statuses every minute ---
+
+  setInterval(() => {
+    updateTripStatuses();
+    renderActiveTrips();
+    if (currentUser && currentUser.type === "employee") {
+      renderEmployeeView();
+    }
+    if (currentUser && currentUser.type === "admin") {
+      renderAdminView();
+    }
+  }, 60000);
+
+  // --- Init ---
+
+  (function init() {
+    populateEmployeeSelects();
+    setRole("employee");
+    renderActiveTrips();
+    
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('trip-start').min = today;
+    document.getElementById('trip-end').min = today;
+  })();
+</script>
+</body>
+</html>
