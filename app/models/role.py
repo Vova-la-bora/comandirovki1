@@ -1,0 +1,32 @@
+from sqlalchemy import Column, Integer, String, DateTime  # добавить DateTime
+from datetime import datetime
+
+from app.core.database import Base
+
+
+class Role(Base):
+
+    __tablename__ = "roles"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    deleted_at = Column(DateTime, nullable=True)  # ДОБАВИТЬ
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None
+        }
+    
+    def soft_delete(self):
+        self.deleted_at = datetime.utcnow()
+    
+    def restore(self):
+        self.deleted_at = None
+    
+    @property
+    def is_deleted(self):
+        return self.deleted_at is not None

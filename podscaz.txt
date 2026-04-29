@@ -1,0 +1,26 @@
+docker-compose up --build
+docker compose up --build
+docker compose down -v
+http://localhost:8000/docs
+source venv/bin/activate
+python3 -m venv venv
+
+admin = User(
+...     name="Admin",
+...     email="admin@example.com",
+...     password=hash_password("admin123"),
+...     role="admin"
+... ) ID: 2
+{
+  "email": "admin@example.com",
+  "password": "admin123"
+}
+{
+  "name": "Ivan Petrov",
+  "email": "ivan@mail.com",
+  "password": "ivan123"
+}
+{
+  "name": "Ivan Ivanov",
+  "email": "ivan.new@mail.com"
+}
